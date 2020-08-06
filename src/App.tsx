@@ -106,8 +106,11 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
         uniform int frame;
         uniform vec3 mouse;
 
-      ` + simulation
-    ])
+      ` + simulation,
+    ],
+    (err) => {
+      console.log(err)
+    })
 
     const shadeProgram = twgl.createProgramInfo(gl, [
       vertex_program,
@@ -117,8 +120,21 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
       ` + shade
     ])
 
+
     const noise_tex = twgl.createTexture(gl, {
-      src: noise_image,
+      type: gl.FLOAT,
+      height: 1024,
+      width: 1024,
+      wrap: gl.REPEAT,
+      format: gl.RED,
+      internalFormat: gl.R32F,
+      src: (() => {
+        let arr = []
+        for (let i = 0; i < 2048*2048; i++) {
+          arr[i] = Math.random()*2-1
+        }
+        return arr
+       })(),
     })
 
     const mouse_pos = {x: 0, y: 0, z: 0}
@@ -226,11 +242,22 @@ const App = () => {
     const float DISTANCE_SAMPLES = 16.0;
     const float CIRCLE_SAMPLES = 16.0;
 
-    float gold_noise(vec2 xy, float seed){
-      return fract(tan(distance(xy*PHI, xy)*seed)*xy.x)*2.0 - 1.0;
+    float random_float(vec2 xy, float seed) {
+      return fract(tan(distance(xy*PHI, xy)*seed)*xy.x) * 2.0 - 1.0;
     }
 
-    vec2 gold_noise(vec2 uv, vec2 seed) {
+    float random_float_tex(vec2 xy, float seed) {
+      return texture2D(noise_tex, xy + vec2(seed, 0)).r;
+    }
+
+    vec2 random_vec2(vec2 xy, vec2 seed) {
+      return vec2(
+        random_float(xy, seed.x),
+        random_float(xy, seed.y)
+      );
+    }
+
+    vec2 random_vec2_tex(vec2 uv, vec2 seed) {
       return vec2(
             texture2D(noise_tex, uv + vec2(seed.x, 0)).r,
             texture2D(noise_tex, uv + vec2(0, seed.y)).g
@@ -258,7 +285,8 @@ const App = () => {
 
                 vec2 offset = vec2(sin(circle_pos), cos(circle_pos));
 
-                //offset += gold_noise(uv, vec2(iTime + dist + circle_pos + 1.0, iTime + dist + circle_pos + 2.0)) / SIZE;
+                float seed = time + dist + circle_pos;
+                //offset += random_vec2_tex(uv, vec2(seed + 1.0, seed + 2.0))*0.25;
 
                 offset *= dist*SIZE;
                 offset *= scale;
