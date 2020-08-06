@@ -17,18 +17,18 @@ const positionFromMouseEvent = (event: {clientX: number, clientY: number, target
   x = x * target.width  / target.clientWidth
   y = y * target.height / target.clientHeight
 
-  return [x, y]  
+  return [x, y]
 }
 
 const useWebGL = (
-  id: string, 
+  id: string,
   init: (gl: WebGL2RenderingContext) => {
-    render: (time: number) => any, 
-    resize: (width: number, height: number) => void, 
+    render: (time: number) => any,
+    resize: (width: number, height: number) => void,
     shutdown: () => void
   }
   ) => {
-  let [webGLContext, setWebGLContext] = useState<WebGL2RenderingContext | null>(null)
+  let [webGLContext, setWebGLContext] = useState<WebGL2RenderingContext | null>(null)
 
   useEffect(() => {
     let element = document.getElementById(id) as HTMLCanvasElement
@@ -42,13 +42,13 @@ const useWebGL = (
     }
 
     let gl = element.getContext("webgl2", { antialias: false, depth: false })
-    
-    if (!gl) {
+
+    if (!gl) {
       return;
     }
 
     let {render, resize, shutdown} = init(gl)
-    
+
     if (render) {
       let loop: (time: number) => void
 
@@ -58,12 +58,12 @@ const useWebGL = (
           resize(element.width, element.height)
         }
 
-        if (!render(time)) {
-          requestAnimationFrame(loop)  
+        if (!render(time)) {
+          requestAnimationFrame(loop)
         } else {
           shutdown()
         }
-      } 
+      }
       requestAnimationFrame(loop)
     }
 
@@ -85,21 +85,6 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
     });
 
     let buffers: twgl.FramebufferInfo[] = []
-    for (let i = 0; i < 2; i++) {
-      buffers[i] = twgl.createFramebufferInfo(
-        gl,
-        [{ 
-          format: gl.RED, 
-          internalFormat: gl.R8,
-          type: gl.BYTE, 
-          mag: gl.LINEAR, 
-          min: gl.LINEAR,
-          wrap: gl.REPEAT,
-        },],  
-        gl.canvas.width,
-        gl.canvas.height
-      )
-    }
 
     const vertex_program = `
       attribute vec4 position;
@@ -107,9 +92,8 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
         gl_Position = position;
       }
     `
-
     const program_header = `
-      precision highp float;      
+      precision highp float;
       uniform float time;
       uniform vec2 resolution;
       uniform sampler2D noise_tex;
@@ -173,33 +157,33 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
        render: (time) => {
         gl.bindFramebuffer(gl.FRAMEBUFFER, buffers[0].framebuffer);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  
+
         const uniforms = {
           resolution: [gl.canvas.width, gl.canvas.height],
           self: buffers[1].attachments[0],
           frame: frame,
           mouse: [
-            mouse_pos.x, 
-            -mouse_pos.y + gl.canvas.height, 
+            mouse_pos.x,
+            -mouse_pos.y + gl.canvas.height,
             mouse_pos.z
           ],
           time: time / 1000,
           noise_tex: noise_tex,
         };
-  
+
         gl.useProgram(simulationProgram.program);
         twgl.setBuffersAndAttributes(gl, simulationProgram, rectangle);
         twgl.setUniforms(simulationProgram, uniforms);
         twgl.drawBufferInfo(gl, rectangle);
-  
+
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  
-      [buffers[0], buffers[1]] = [buffers[1], buffers[0]] 
-  
+
+      [buffers[0], buffers[1]] = [buffers[1], buffers[0]]
+
       frame = frame + 1
-  
-      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);   
-  
+
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
       gl.useProgram(shadeProgram.program);
       twgl.setBuffersAndAttributes(gl, shadeProgram, rectangle);
       twgl.setUniforms(shadeProgram, {
@@ -211,8 +195,18 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
       twgl.drawBufferInfo(gl, rectangle)
       },
       resize: (width, height) => {
-        for (let buffer of buffers) {
-          twgl.resizeFramebufferInfo(gl, buffer, buffer.attachments)
+        buffers = []
+        for (let i = 0; i < 2; i++) {
+          buffers[i] = twgl.createFramebufferInfo(gl, [{
+              format: gl.RED,
+              internalFormat: gl.R32F,
+              type: gl.FLOAT,
+              minMag: gl.LINEAR,
+              wrap: gl.REPEAT,
+            }],
+            gl.canvas.width,
+            gl.canvas.height
+          )
         }
       },
       shutdown: () => {
@@ -222,12 +216,12 @@ const useSimulation = (id: string, simulation: string, shade: string) => {
   })
 }
 
-const App = () => {  
+const App = () => {
 
   let common = `
-    const float PHI = 1.61803398874989484820459;  // Φ = Golden Ratio   
+    const float PHI = 1.61803398874989484820459;  // Φ = Golden Ratio
     const float PI = radians(180.0);
-    const float SIZE = 64.0;
+    const float SIZE = 32.0;
 
     const float DISTANCE_SAMPLES = 16.0;
     const float CIRCLE_SAMPLES = 16.0;
@@ -238,7 +232,7 @@ const App = () => {
 
     vec2 gold_noise(vec2 uv, vec2 seed) {
       return vec2(
-            texture2D(noise_tex, uv + vec2(seed.x, 0)).r, 
+            texture2D(noise_tex, uv + vec2(seed.x, 0)).r,
             texture2D(noise_tex, uv + vec2(0, seed.y)).g
         );
     }
@@ -250,44 +244,42 @@ const App = () => {
         return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
     }
 `
-  
+
   useSimulation("webgl", common + `
     vec2 get_attraction(vec2 uv)
     {
         vec2 scale = (1.0 / resolution.xy);
-            
+
         vec2 res = vec2(0.0);
         const float samples = 1.0;
-            
-        for (float dist = 0.0; dist <= 1.0; dist += 1.0/DISTANCE_SAMPLES) {        
+
+        for (float dist = 0.0; dist <= 1.0; dist += 1.0/DISTANCE_SAMPLES) {
             for (float circle_pos = -PI; circle_pos <= PI; circle_pos += 1.0/CIRCLE_SAMPLES) {
-                
+
                 vec2 offset = vec2(sin(circle_pos), cos(circle_pos));
-                
+
                 //offset += gold_noise(uv, vec2(iTime + dist + circle_pos + 1.0, iTime + dist + circle_pos + 2.0)) / SIZE;
-                            
+
                 offset *= dist*SIZE;
                 offset *= scale;
-    
-                float val = pow(texture2D(self, uv + offset).r, 2.95);
-    
+
+                float val = pow(texture2D(self, uv + offset).r, 2.0);
+
                 res += offset * val;
             }
         }
-        
-        
+
+
         res /= DISTANCE_SAMPLES * CIRCLE_SAMPLES;
-        res *= 0.15;
-                
+        res *= 1.0;
+
         return res;
     }
-    
+
     void main()
     {
         vec2 uv = gl_FragCoord.xy/resolution.xy;
 
-        
-        
         gl_FragColor.r = texture2D(self, uv).r*0.25;
 
         if (mouse.z > 0.0) {
@@ -295,54 +287,47 @@ const App = () => {
         }
 
         if (gl_FragColor.r == 0.0) {
-          //discard;
+          discard;
         }
 
-        /*
-        
-        
-        float rot = radians(180.0);
-        
+        /*float rot = radians(180.0);
+
         uv -= 0.5;
         uv *= mat2(cos(rot), -sin(rot), sin(rot), cos(rot));
         uv += 0.5;*/
-                  
-      
-        
+
+
+
         gl_FragColor.r += texture2D(self, uv - get_attraction(uv) ).r;
-        
-        gl_FragColor.r *= 0.85;
-        
-        //gl_FragColor.r = sin(gl_FragColor.r); 
-        
-      
-   
+
+        gl_FragColor.r *= 0.99;
+
+        //gl_FragColor.r = sin(gl_FragColor.r);
     }`,
     common + `
       void main()
       {
           vec2 uv = gl_FragCoord.xy/resolution.xy;
           float v = texture2D(self, uv).r;
-              
+
           vec3 color = hsv2rgb(vec3(v/10.0 - 0.05, abs(pow(v, 0.25)), abs(v)));
           vec3 e = vec3(vec2(1.0) / resolution.xy, 0.0);
           vec3 grad = normalize(vec3(
-            texture2D(self, uv + e.xz).x - texture2D(self, uv - e.xz).x, 
+            texture2D(self, uv + e.xz).x - texture2D(self, uv - e.xz).x,
             texture2D(self, uv + e.zy).x - texture2D(self, uv - e.zy).x, 1.0));
           vec3 light = vec3(0.26, -0.32, 0.91);
           float diffuse = dot(grad, light);
           float spec = pow(max(0.0, -reflect(light, grad).z), 64.0);
-          
+
           gl_FragColor.rgb = (color * diffuse) + vec3(spec*2.0, spec, spec*-1.0);
-                  
-          
+
           //gl_FragColor.rgb = vec3(v,v,v);
-          gl_FragColor.a = v;
+          gl_FragColor.a = 1.0;
       }
     `
-  )  
-  
-  return <canvas style={{width: "100%",  height: "100%"}} id="webgl"></canvas>
+  )
+
+  return <canvas style={{width: "100vw",  height: "100vh"}} id="webgl"></canvas>
 }
 
 export default App;
