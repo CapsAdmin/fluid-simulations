@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/fluid-simulations/precache-manifest.1d9938201358ec58c3cdb4c7818a3665.js"
+  "/fluid-simulations/precache-manifest.9343251c47cafc921e7992d5f50d9683.js"
 );
 
 self.addEventListener('message', (event) => {
