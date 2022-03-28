@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/fluid-simulations/blobs/static/css/main.5788222d.css",
+    "main.js": "/fluid-simulations/blobs/static/js/main.05185b1d.js",
+    "index.html": "/fluid-simulations/blobs/index.html",
+    "main.5788222d.css.map": "/fluid-simulations/blobs/static/css/main.5788222d.css.map",
+    "main.05185b1d.js.map": "/fluid-simulations/blobs/static/js/main.05185b1d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5788222d.css",
+    "static/js/main.05185b1d.js"
+  ]
+}
