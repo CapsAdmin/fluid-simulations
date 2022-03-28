@@ -15,9 +15,12 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/paint" element={<PaintSimulation />} />
-        <Route path="/blobs" element={<BlobSimulation />} />
-        <Route path="/strange-fluid" element={<StrangeFluidSimulation />} />
+        <Route path="fluid-simulations/paint" element={<PaintSimulation />} />
+        <Route path="fluid-simulations/blobs" element={<BlobSimulation />} />
+        <Route
+          path="fluid-simulations/strange-fluid"
+          element={<StrangeFluidSimulation />}
+        />
       </Routes>
     </BrowserRouter>
   );
