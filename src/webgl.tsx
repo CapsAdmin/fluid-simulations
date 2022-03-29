@@ -3,6 +3,8 @@ import * as twgl from "twgl.js";
 
 export * as twgl from "twgl.js";
 
+export const glsl = (str: TemplateStringsArray) => str.join();
+
 export const useWebGL = (
   id: string,
   init: (gl: WebGL2RenderingContext) => {

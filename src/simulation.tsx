@@ -10,7 +10,7 @@ const common = `
     const float CIRCLE_SAMPLES = 16.0;
 
     float random_float(vec2 xy, float seed) {
-      return fract(tan(distance(xy*PHI, xy)*seed)*xy.x) * 2.0 - 1.0;
+      return fract(tan(distance(xy*PHI, xy)*(seed + 1.0))*xy.x) * 2.0 - 1.0;
     }
 
     float random_float_tex(vec2 xy, float seed) {
@@ -232,8 +232,8 @@ export const useSimulation = (
             gl,
             [
               {
-                format: gl.RED,
-                internalFormat: gl.R32F,
+                format: gl.RGBA,
+                internalFormat: gl.RGBA32F,
                 type: gl.FLOAT,
                 minMag: gl.LINEAR,
                 wrap: gl.REPEAT,

@@ -1,6 +1,7 @@
 import React from "react";
 import { SimulationCanvas } from "../App";
 import { useSimulation } from "../simulation";
+import { glsl } from "../webgl";
 
 export const BlobSimulation = () => {
   useSimulation(
@@ -26,11 +27,11 @@ export const BlobSimulation = () => {
         void main()
         {
             vec2 uv = gl_FragCoord.xy/resolution.xy;
-
             
             vec3 noise = texture2D(noise_tex, time*0.001 + uv*0.015*0.15).rgb;
 
             float height = (noise.b*2.0-1.0) * 0.01;
+            float door = texture2D(door_tex, -uv).r;
             
             {	
                 vec2 muv = noise.xy;
@@ -40,7 +41,7 @@ export const BlobSimulation = () => {
                 float a = atan(p.y, p.x);
                 r = pow(r*2.0, 1.0 + height * 0.05);
 
-                r = r + (texture2D(door_tex, -uv).r)/100.0;
+                r = r + (door)/100.0;
 
                 p = r * vec2(cos(a)*0.5, sin(a)*0.5);
                 uv = p + muv;
@@ -51,28 +52,36 @@ export const BlobSimulation = () => {
                 gl_FragColor.r = random_float(uv, 0.0);
                 return;
             }
+
+
             
             float val = texture2D(self, uv).r;
+
+            float door2 = clamp(pow((door), 1.3) + texture2D(self, uv).b*1.01, 0.0, 1.0)*0.98;
+
+
             float avg = get_average(uv, height*-0.005);
             gl_FragColor.r = sin(avg * (2.3 + TEMPERATURE + height*2.0)) + sin(val);
 
-            gl_FragColor.r *= -texture2D(door_tex, -uv).r+1.0;
+            gl_FragColor.r *= -door2+1.0;
+            gl_FragColor.b = door2;
+
 
             
             if (mouse.z > 0.0) 
                 gl_FragColor.r += smoothstep(length(resolution.xy)/5.0, 0.5, length(mouse.xy - gl_FragCoord.xy)) * sin(time*10.0);
         } 
   `,
-    `
+
+    glsl`
     void main() {
         vec2 uv = gl_FragCoord.xy / resolution;
 
-        float v = texture2D(self, gl_FragCoord.xy/resolution.xy).r;
-        float b = v;
+        float v = texture2D(self, uv).r;
+        float b = -clamp(texture2D(self, uv).b, 0.0, 1.0)+1.0;
         v *= 0.5;
         v = v * 0.5 + 0.5;
         v = clamp(v, 0.0, 1.0);
-
 
         vec3 e = vec3(vec2(1.0)/resolution.xy,0.0);
         float p10 = texture2D(self, uv-e.zy).x;
@@ -93,7 +102,10 @@ export const BlobSimulation = () => {
 
         
 
-        gl_FragColor.rgb = ((color * diffuse) + spec) * pow(b, 0.85);
+        gl_FragColor.rgb = ((color * diffuse) + spec) * pow(b, 1.0);
+
+        //gl_FragColor.rgb = vec3(1.0)*texture2D(self, uv).b;
+
         gl_FragColor.a = 1.0;
       }          
     `
