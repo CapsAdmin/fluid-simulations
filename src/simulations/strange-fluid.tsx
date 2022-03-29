@@ -1,3 +1,5 @@
+// BLACK BACKGROUND TO AVOID SQUARE SHAPE
+
 import React from "react";
 import { SimulationCanvas } from "../App";
 import { useSimulation } from "../simulation";
@@ -16,16 +18,16 @@ export const StrangeFluidSimulation = () => {
     {
         float val = get_pixel(0.0, 0.0).r;
         
-        val += random_float(uv, 0.0)*val*0.15; // errosion
+        val += random_float(uv, 1.0)*val*0.15; // errosion
         
         val = get_pixel(
-          sin(get_pixel(val, 0.0).r  - get_pixel(-val, 0.0) + PI).r  * val * 0.4, 
-            cos(get_pixel(0.0, -val).r - get_pixel(0.0 , val) - PI2).r * val * 0.4
+          sin(get_pixel(val, 0.0).r  - get_pixel(-val, 0.0) + PI).r  * val * 0.34, 
+            cos(get_pixel(0.0, -val).r - get_pixel(0.0 , val) - PI2).r * val * 0.34
         ).r;
         if (mouse.z > 0.0) 
           val += smoothstep(length(resolution.xy)/10.0, 0.5, length(mouse.xy - gl_FragCoord.xy));
         
-        val *= 1.001;
+        val *= 1.0;
         
         return val;
     }
@@ -37,8 +39,7 @@ export const StrangeFluidSimulation = () => {
     
         if(frame == 0)
             val = 
-              random_float(uv, 0.0)*length(resolution.xy)/100.0 + 
-              smoothstep(length(resolution.xy)/2.0, 0.5, length(resolution.xy * 0.5 - gl_FragCoord.xy))*25.0;
+              random_float(uv, 1.0)*length(resolution.xy)/100.0;
                     
         gl_FragColor.r = val;
     }
