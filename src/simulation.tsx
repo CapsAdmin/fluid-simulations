@@ -1,5 +1,5 @@
 import { useWebGL, twgl } from "./webgl";
-import door_image from "./assets/projection.png";
+
 const common = `
     const float PHI = 1.61803398874989484820459;
     const float PI = radians(180.0);
@@ -77,7 +77,8 @@ const positionFromMouseEvent = (event: {
 export const useSimulation = (
   id: string,
   simulation: string,
-  shade: string
+  shade: string,
+  images?: Array<{name: string, img: string}>
 ) => {
   return useWebGL(id, (gl) => {
     let rectangle = twgl.createBufferInfoFromArrays(gl, {
@@ -86,6 +87,14 @@ export const useSimulation = (
 
     let buffers: twgl.FramebufferInfo[] = [];
 
+    let imagesHeader = ""
+
+    if (images) {
+      for (let image of images) {
+        imagesHeader += `uniform sampler2D ${image.name};\n`
+      }
+    }
+
     const simulationProgram = twgl.createProgramInfo(
       gl,
       [
@@ -93,7 +102,7 @@ export const useSimulation = (
         program_header +
           `
           uniform sampler2D self;
-          uniform sampler2D door_tex;
+          ${imagesHeader}
           uniform int frame;
           uniform vec3 mouse;
   
@@ -110,8 +119,7 @@ export const useSimulation = (
       program_header +
         `
           uniform sampler2D self;
-          uniform sampler2D door_tex;
-  
+          ${imagesHeader}  
         ` +
         shade,
     ]);
@@ -134,9 +142,14 @@ export const useSimulation = (
       })(),
     });
 
-    const door_tex = twgl.createTexture(gl, {
-      src: door_image,
-    });
+    const imageTextures: {[key: string]: WebGLTexture} = {}
+    if (images) {
+      for (let image of images) {
+        imageTextures[image.name] = twgl.createTexture(gl, {
+          src: image.img,
+        })
+      }
+    }
 
     const mouse_pos = { x: 0, y: 0, z: 0 };
 
@@ -198,7 +211,7 @@ export const useSimulation = (
           mouse: [mouse_pos.x, -mouse_pos.y + gl.canvas.height, mouse_pos.z],
           time: time / 1000,
           noise_tex: noise_tex,
-          door_tex: door_tex,
+          ...imageTextures,
         };
 
         gl.useProgram(simulationProgram.program);
@@ -221,7 +234,7 @@ export const useSimulation = (
           resolution: [gl.canvas.width, gl.canvas.height],
           time: time,
           noise_tex: noise_tex,
-          door_tex: door_tex,
+          ...imageTextures,
         });
         twgl.drawBufferInfo(gl, rectangle);
       },
